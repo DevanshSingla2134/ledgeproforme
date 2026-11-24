@@ -40,13 +40,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onNotify }) 
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
 
-  const fillDemoAdmin = () => {
-    setLoginIdentifier('admin');
-    setLoginPassword('admin123');
-    setErrorMsg(null);
-    onNotify('Demo admin credentials populated (admin / admin123)', 'info');
-  };
-
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -228,21 +221,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onNotify }) 
               <div>
                 <h2 className="text-lg font-black text-white tracking-tight">Merchant Sign In</h2>
                 <p className="text-xs text-slate-400 mt-1">Access your store dashboard, inventory, and khata registers.</p>
-              </div>
-
-              {/* Demo Fill Pill for Fast Grading */}
-              <div className="p-3 bg-blue-950/40 border border-blue-500/30 rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-blue-300 block">Evaluator Quick Login</span>
-                  <span className="text-[10px] text-slate-400 font-mono">admin / admin123</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={fillDemoAdmin}
-                  className="px-3 py-1 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-[11px] font-bold rounded-xl transition-colors shadow-sm"
-                >
-                  Fill Demo Admin
-                </button>
               </div>
 
               <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
