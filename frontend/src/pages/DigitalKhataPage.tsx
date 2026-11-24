@@ -367,8 +367,14 @@ export const DigitalKhataPage: React.FC<DigitalKhataPageProps> = ({ onNotify, on
             </div>
           </>
         ) : (
-          <div className="h-full flex items-center justify-center text-center text-xs text-slate-400">
-            Select a customer from the left to view ledger details.
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <p className="font-bold text-slate-800 text-sm">No Khata Account Selected</p>
+            <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+              When you add customers and sell on credit (Udhaar), their running balances, statements, and payment audit trails will appear here.
+            </p>
           </div>
         )}
       </div>

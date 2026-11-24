@@ -81,10 +81,10 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="hidden md:block text-left">
             <p className="text-xs font-bold text-slate-800 leading-tight">
-              {currentUser?.fullName || 'Rajesh Sharma'}
+              {currentUser?.fullName || 'Store Owner'}
             </p>
             <p className="text-[10px] text-slate-400 font-medium truncate max-w-[130px]">
-              {currentBusiness?.name || 'Sharma Supermart'}
+              {currentBusiness?.name || 'My Store'}
             </p>
           </div>
 

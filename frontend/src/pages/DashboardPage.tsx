@@ -154,6 +154,38 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ stats, loading, on
         </div>
       </div>
 
+      {/* Fresh Store Onboarding Banner */}
+      {stats.totalProducts === 0 && (
+        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-blue-800/40">
+          <div className="space-y-2 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-400/30">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Independent Store Activated</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">Welcome! Your private ledger is ready.</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              This business has its own isolated inventory, customers, suppliers, and khata records. Add your first product or register a customer below to get started.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => onNavigate('inventory')}
+              className="px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2"
+            >
+              <Package className="w-4 h-4" />
+              <span>+ Add Your First Product</span>
+            </button>
+            <button
+              onClick={() => onNavigate('customers')}
+              className="px-5 py-3 bg-slate-800/80 hover:bg-slate-800 text-slate-200 font-bold text-xs rounded-2xl border border-slate-700 transition-all flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              <span>+ Register Customer</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi, idx) => {

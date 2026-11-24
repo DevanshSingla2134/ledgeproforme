@@ -125,6 +125,7 @@ export const App: React.FC = () => {
         setActiveTab={setActiveTab}
         lowStockCount={stats?.lowStockCount || 0}
         debtorCount={stats?.outstandingKhataBalance && stats.outstandingKhataBalance > 0 ? 1 : 0}
+        currentBusiness={currentBusiness}
       />
 
       {/* Main Content Area */}
@@ -159,6 +160,7 @@ export const App: React.FC = () => {
             <POSBillingPage
               onNotify={showToast}
               onRefreshDashboard={loadDashboardStats}
+              currentBusiness={currentBusiness}
             />
           )}
 
@@ -182,7 +184,17 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'settings' && (
-            <SettingsPage onNotify={showToast} />
+            <SettingsPage
+              onNotify={showToast}
+              onUpdateBusiness={(b) => {
+                setCurrentBusiness(b);
+                try {
+                  localStorage.setItem('ledgepro_business', JSON.stringify(b));
+                } catch (e) {
+                  console.warn(e);
+                }
+              }}
+            />
           )}
         </main>
       </div>

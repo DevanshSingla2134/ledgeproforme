@@ -15,15 +15,20 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { Customer, Invoice, InvoiceItem, Product } from '../types';
+import { Business, Customer, Invoice, InvoiceItem, Product } from '../types';
 import { api, getActiveBusinessId } from '../services/api';
 
 interface POSBillingPageProps {
   onNotify: (msg: string, type?: 'success' | 'error' | 'info') => void;
   onRefreshDashboard?: () => void;
+  currentBusiness?: Business | null;
 }
 
-export const POSBillingPage: React.FC<POSBillingPageProps> = ({ onNotify, onRefreshDashboard }) => {
+export const POSBillingPage: React.FC<POSBillingPageProps> = ({ 
+  onNotify, 
+  onRefreshDashboard,
+  currentBusiness 
+}) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [productSearch, setProductSearch] = useState('');
@@ -248,53 +253,67 @@ export const POSBillingPage: React.FC<POSBillingPageProps> = ({ onNotify, onRefr
         </div>
 
         {/* Product Cards Grid */}
-        <div className="flex-1 overflow-y-auto pt-4 pr-1 grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-          {filteredProducts.map((p) => {
-            const inCart = cartItems.find((i) => i.productId === p.id);
-            const isOutOfStock = p.quantity <= 0;
-            return (
-              <div
-                key={p.id}
-                onClick={() => !isOutOfStock && handleAddToCart(p)}
-                className={`p-3.5 rounded-2xl border transition-all text-left flex flex-col justify-between select-none ${
-                  isOutOfStock
-                    ? 'opacity-50 bg-slate-100 border-slate-200 cursor-not-allowed'
-                    : inCart
-                    ? 'bg-blue-50/60 border-blue-400 shadow-sm cursor-pointer'
-                    : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md cursor-pointer'
-                }`}
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-1">
-                    <span className="font-mono text-[10px] text-slate-400 font-bold">{p.sku}</span>
-                    <span
-                      className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
-                        isOutOfStock
-                          ? 'bg-red-100 text-red-700'
-                          : p.quantity <= p.minStockLevel
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {p.quantity} left
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-xs text-slate-900 mt-1.5 line-clamp-2 leading-snug">
-                    {p.name}
-                  </h3>
-                </div>
-
-                <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <span className="font-black text-sm text-slate-900">₹{Number(p.sellingPrice).toFixed(2)}</span>
-                  {inCart && (
-                    <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-extrabold text-[10px] flex items-center justify-center">
-                      {inCart.quantity}
-                    </span>
-                  )}
-                </div>
+        <div className="flex-1 overflow-y-auto pt-4 pr-1">
+          {products.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Receipt className="w-6 h-6" />
               </div>
-            );
-          })}
+              <p className="font-bold text-slate-800 text-sm">No items in your catalog</p>
+              <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                Your store currently has 0 products. Add your products with prices and stock in the Inventory module to begin POS billing.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+              {filteredProducts.map((p) => {
+                const inCart = cartItems.find((i) => i.productId === p.id);
+                const isOutOfStock = p.quantity <= 0;
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => !isOutOfStock && handleAddToCart(p)}
+                    className={`p-3.5 rounded-2xl border transition-all text-left flex flex-col justify-between select-none ${
+                      isOutOfStock
+                        ? 'opacity-50 bg-slate-100 border-slate-200 cursor-not-allowed'
+                        : inCart
+                        ? 'bg-blue-50/60 border-blue-400 shadow-sm cursor-pointer'
+                        : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-md cursor-pointer'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-1">
+                        <span className="font-mono text-[10px] text-slate-400 font-bold">{p.sku}</span>
+                        <span
+                          className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                            isOutOfStock
+                              ? 'bg-red-100 text-red-700'
+                              : p.quantity <= p.minStockLevel
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {p.quantity} left
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-xs text-slate-900 mt-1.5 line-clamp-2 leading-snug">
+                        {p.name}
+                      </h3>
+                    </div>
+
+                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="font-black text-sm text-slate-900">₹{Number(p.sellingPrice).toFixed(2)}</span>
+                      {inCart && (
+                        <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-extrabold text-[10px] flex items-center justify-center">
+                          {inCart.quantity}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -499,10 +518,18 @@ export const POSBillingPage: React.FC<POSBillingPageProps> = ({ onNotify, onRefr
             <div id="printable-invoice" className="p-8 overflow-y-auto space-y-6 text-xs text-slate-800 font-sans">
               {/* Store Header */}
               <div className="text-center space-y-1 pb-4 border-b border-slate-200">
-                <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight">Sharma Supermart & Wholesale</h1>
-                <p className="text-[11px] text-slate-500">Your Business. One Smart Ledger.</p>
-                <p className="text-[11px] text-slate-500">Shop 14, Main Market, Sector 17, Chandigarh | Phone: +91 98765 43210</p>
-                <p className="font-mono text-[10px] text-slate-400 font-bold">GSTIN: 07AAAAA0000A1Z5</p>
+                <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+                  {currentBusiness?.name || 'Your Retail Store'}
+                </h1>
+                <p className="text-[11px] text-slate-500">{currentBusiness?.tagline || 'Your Business. One Smart Ledger.'}</p>
+                {currentBusiness?.address && (
+                  <p className="text-[11px] text-slate-500">
+                    {currentBusiness.address} {currentBusiness?.phone ? `| Phone: ${currentBusiness.phone}` : ''}
+                  </p>
+                )}
+                {currentBusiness?.taxId && (
+                  <p className="font-mono text-[10px] text-slate-400 font-bold">GSTIN: {currentBusiness.taxId}</p>
+                )}
               </div>
 
               {/* Invoice Meta */}
@@ -569,8 +596,8 @@ export const POSBillingPage: React.FC<POSBillingPageProps> = ({ onNotify, onRefr
 
               {/* Footer Notice */}
               <div className="text-center pt-4 border-t border-dashed border-slate-200 text-[10px] text-slate-400 space-y-1">
-                <p>Thank you for shopping with Sharma Supermart!</p>
-                <p className="font-mono">Powered by LEDGE PRO &bull; Chitkara University Java S3 Project</p>
+                <p>Thank you for shopping with {currentBusiness?.name || 'our store'}!</p>
+                <p className="font-mono">Powered by LEDGE PRO &bull; Business &amp; Digital Khata OS</p>
               </div>
             </div>
           </div>

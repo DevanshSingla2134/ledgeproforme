@@ -13,9 +13,10 @@ import { api } from '../services/api';
 
 interface SettingsPageProps {
   onNotify: (msg: string, type?: 'success' | 'error' | 'info') => void;
+  onUpdateBusiness?: (business: Business) => void;
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onNotify }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = ({ onNotify, onUpdateBusiness }) => {
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -41,8 +42,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNotify }) => {
     if (!business) return;
     try {
       setSaving(true);
-      await api.updateBusinessProfile(business);
-      onNotify('Store profile and tax parameters updated successfully', 'success');
+      const updated = await api.updateBusinessProfile(business);
+      setBusiness(updated);
+      if (onUpdateBusiness) {
+        onUpdateBusiness(updated);
+      }
+      onNotify('Store profile and operating parameters updated successfully', 'success');
     } catch (err: any) {
       onNotify(err.message, 'error');
     } finally {

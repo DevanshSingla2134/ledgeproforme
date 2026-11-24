@@ -243,7 +243,22 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ onNotify }) => {
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">No products match your search query.</td>
+                  <td colSpan={7} className="text-center py-12 text-slate-400">
+                    <div className="max-w-sm mx-auto space-y-3">
+                      <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+                        <Package className="w-5 h-5" />
+                      </div>
+                      <p className="font-bold text-slate-800 text-sm">Your store inventory is empty</p>
+                      <p className="text-xs text-slate-400">You have not added any products yet. Stock your catalog to start POS billing.</p>
+                      <button
+                        onClick={handleOpenAddModal}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-1.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Your First Product</span>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ) : (
                 products.map((p) => {

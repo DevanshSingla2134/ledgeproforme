@@ -233,7 +233,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onNotify }) 
                       required
                       value={loginIdentifier}
                       onChange={(e) => setLoginIdentifier(e.target.value)}
-                      placeholder="e.g. admin or rajesh@sharmaretails.in"
+                      placeholder="Enter username or registered email..."
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
                     />
                   </div>

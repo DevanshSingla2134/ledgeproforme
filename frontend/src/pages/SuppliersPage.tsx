@@ -117,7 +117,20 @@ export const SuppliersPage: React.FC<SuppliersPageProps> = ({ onNotify }) => {
         {loading ? (
           <div className="col-span-3 text-center py-12 text-slate-400 text-xs">Loading suppliers...</div>
         ) : suppliers.length === 0 ? (
-          <div className="col-span-3 text-center py-12 text-slate-400 text-xs">No supplier records found.</div>
+          <div className="col-span-3 text-center py-12 bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <Truck className="w-5 h-5" />
+            </div>
+            <p className="font-bold text-slate-800 text-sm">No suppliers registered yet</p>
+            <p className="text-xs text-slate-400">Add your wholesale distributors, stockists, and vendors.</p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Register First Supplier</span>
+            </button>
+          </div>
         ) : (
           suppliers.map((s) => (
             <div key={s.id} className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">

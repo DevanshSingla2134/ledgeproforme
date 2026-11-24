@@ -12,6 +12,8 @@ import {
   Sparkles
 } from 'lucide-react';
 
+import { Business } from '../types';
+
 export type NavTab = 'dashboard' | 'inventory' | 'billing' | 'khata' | 'customers' | 'suppliers' | 'reports' | 'settings';
 
 interface SidebarProps {
@@ -19,13 +21,15 @@ interface SidebarProps {
   setActiveTab: (tab: NavTab) => void;
   lowStockCount?: number;
   debtorCount?: number;
+  currentBusiness?: Business | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   activeTab, 
   setActiveTab, 
   lowStockCount = 0,
-  debtorCount = 0 
+  debtorCount = 0,
+  currentBusiness
 }) => {
   const navItems = [
     { id: 'dashboard' as NavTab, label: 'Dashboard', icon: LayoutDashboard },
@@ -91,15 +95,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </nav>
 
-      {/* Chitkara Academic Badge */}
+      {/* Security Status Badge */}
       <div className="p-3 mx-3 mb-4 rounded-xl bg-slate-900/90 border border-slate-800/80 text-xs">
         <div className="flex items-center gap-1.5 text-blue-400 font-bold mb-1">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Java 21 Academic Project</span>
+          <span>Independent Store Ledger</span>
         </div>
         <p className="text-[11px] text-slate-400 leading-relaxed">
-          Chitkara University | B.E. CSE S3<br />
-          Pure JDBC &bull; Stream API &bull; ACID
+          Private Storefront &bull; Zero Leakage<br />
+          Encrypted POS &amp; Khata Records
         </p>
       </div>
 
@@ -107,9 +111,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-3.5 border-t border-slate-800/80 bg-slate-950/60 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-slate-300 font-medium truncate max-w-[140px]">Sharma Supermart</span>
+          <span className="text-slate-300 font-medium truncate max-w-[140px]">
+            {currentBusiness?.name || 'My Store'}
+          </span>
         </div>
-        <span className="text-[10px] text-slate-500 font-mono">v1.0-CA3</span>
+        <span className="text-[10px] text-slate-500 font-mono">v1.0-PRO</span>
       </div>
     </aside>
   );
