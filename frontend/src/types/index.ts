@@ -1,3 +1,20 @@
+export interface User {
+  id: number;
+  username: string;
+  fullName: string;
+  email: string;
+  role: string;
+  createdAt?: string;
+}
+
+export interface AuthResponse {
+  authenticated: boolean;
+  token: string;
+  user: User;
+  business: Business;
+  message: string;
+}
+
 export interface GenericResponse<T> {
   success: boolean;
   message: string;

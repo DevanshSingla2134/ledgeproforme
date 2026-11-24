@@ -1,4 +1,4 @@
-import { Business, Customer, DashboardStats, Expense, GenericResponse, Invoice, LedgerEntry, Payment, Product, Supplier } from '../types';
+import { AuthResponse, Business, Customer, DashboardStats, Expense, GenericResponse, Invoice, LedgerEntry, Payment, Product, Supplier, User } from '../types';
 
 const API_BASE = '/api';
 
@@ -30,6 +30,12 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // Authentication
+  login: (credentials: { usernameOrEmail: string; password: string }) =>
+    request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
+  register: (payload: { fullName: string; businessName: string; phone?: string; username: string; email: string; password: string }) =>
+    request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
+
   // Dashboard
   getDashboardStats: (businessId = 1) => request<DashboardStats>(`/dashboard/stats?businessId=${businessId}`),
   getLiveLowStockAlerts: () => request<Product[]>('/dashboard/alerts/low-stock'),
