@@ -2,6 +2,7 @@ package com.ledgepro.controller;
 
 import com.ledgepro.service.ReportAnalyticsService;
 import com.ledgepro.util.GenericResponse;
+import com.ledgepro.util.TenantUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,28 +21,42 @@ public class ReportController {
 
     @GetMapping("/top-products")
     public GenericResponse<List<Map<String, Object>>> getTopSellingProducts(
-            @RequestParam(defaultValue = "1") Long businessId,
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId,
             @RequestParam(defaultValue = "5") int limit) {
-        return GenericResponse.success(analyticsService.getTopSellingProducts(businessId, limit));
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        return GenericResponse.success(analyticsService.getTopSellingProducts(targetBizId, limit));
     }
 
     @GetMapping("/payment-methods")
-    public GenericResponse<Map<String, Double>> getSalesByPaymentMethod(@RequestParam(defaultValue = "1") Long businessId) {
-        return GenericResponse.success(analyticsService.getSalesByPaymentMethod(businessId));
+    public GenericResponse<Map<String, Double>> getSalesByPaymentMethod(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) {
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        return GenericResponse.success(analyticsService.getSalesByPaymentMethod(targetBizId));
     }
 
     @GetMapping("/inventory-health")
-    public GenericResponse<Map<String, Object>> getInventoryHealth(@RequestParam(defaultValue = "1") Long businessId) {
-        return GenericResponse.success(analyticsService.getInventoryHealthMetrics(businessId));
+    public GenericResponse<Map<String, Object>> getInventoryHealth(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) {
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        return GenericResponse.success(analyticsService.getInventoryHealthMetrics(targetBizId));
     }
 
     @GetMapping("/financial-summary")
-    public GenericResponse<Map<String, Object>> getFinancialSummary(@RequestParam(defaultValue = "1") Long businessId) {
-        return GenericResponse.success(analyticsService.getFinancialSummary(businessId));
+    public GenericResponse<Map<String, Object>> getFinancialSummary(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) {
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        return GenericResponse.success(analyticsService.getFinancialSummary(targetBizId));
     }
 
     @GetMapping("/expenses-by-category")
-    public GenericResponse<Map<String, Double>> getExpensesByCategory(@RequestParam(defaultValue = "1") Long businessId) {
-        return GenericResponse.success(analyticsService.getExpensesByCategory(businessId));
+    public GenericResponse<Map<String, Double>> getExpensesByCategory(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) {
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        return GenericResponse.success(analyticsService.getExpensesByCategory(targetBizId));
     }
 }

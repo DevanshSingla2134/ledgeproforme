@@ -16,7 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Customer, LedgerEntry } from '../types';
-import { api } from '../services/api';
+import { api, getActiveBusinessId } from '../services/api';
 
 interface DigitalKhataPageProps {
   onNotify: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -51,7 +51,7 @@ export const DigitalKhataPage: React.FC<DigitalKhataPageProps> = ({ onNotify, on
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const data = await api.getCustomers(1, search, debtorsOnly);
+      const data = await api.getCustomers(undefined, search, debtorsOnly);
       setCustomers(data);
       if (data.length > 0 && !selectedCustomerId) {
         setSelectedCustomerId(data[0].id || null);
@@ -91,7 +91,7 @@ export const DigitalKhataPage: React.FC<DigitalKhataPageProps> = ({ onNotify, on
     }
     try {
       await api.recordKhataPayment({
-        businessId: 1,
+        businessId: getActiveBusinessId(),
         customerId: selectedCustomerId,
         amount: paymentAmount,
         paymentMethod,
@@ -121,7 +121,7 @@ export const DigitalKhataPage: React.FC<DigitalKhataPageProps> = ({ onNotify, on
     }
     try {
       await api.recordAdjustment({
-        businessId: 1,
+        businessId: getActiveBusinessId(),
         customerId: selectedCustomerId,
         entryType: adjType,
         amount: adjAmount,

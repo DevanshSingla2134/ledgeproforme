@@ -3,6 +3,7 @@ package com.ledgepro.controller;
 import com.ledgepro.model.Customer;
 import com.ledgepro.service.CustomerService;
 import com.ledgepro.util.GenericResponse;
+import com.ledgepro.util.TenantUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,17 +21,19 @@ public class CustomerController {
 
     @GetMapping
     public GenericResponse<List<Customer>> getCustomers(
-            @RequestParam(defaultValue = "1") Long businessId,
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "false") boolean outstandingOnly) {
 
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
         List<Customer> customers;
         if (outstandingOnly) {
-            customers = customerService.getCustomersWithOutstanding(businessId);
+            customers = customerService.getCustomersWithOutstanding(targetBizId);
         } else if (search != null && !search.trim().isEmpty()) {
-            customers = customerService.searchCustomers(businessId, search);
+            customers = customerService.searchCustomers(targetBizId, search);
         } else {
-            customers = customerService.getAllCustomers(businessId);
+            customers = customerService.getAllCustomers(targetBizId);
         }
         return GenericResponse.success(customers);
     }
@@ -41,16 +44,25 @@ public class CustomerController {
     }
 
     @PostMapping
-    public GenericResponse<Customer> createCustomer(@RequestBody Customer customer) {
-        if (customer.getBusinessId() == null) customer.setBusinessId(1L);
+    public GenericResponse<Customer> createCustomer(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Customer customer) {
+        if (customer.getBusinessId() == null || customer.getBusinessId() <= 0) {
+            customer.setBusinessId(TenantUtil.resolveBusinessId(null, headerBizId));
+        }
         Customer created = customerService.createCustomer(customer);
         return GenericResponse.success(created, "Customer profile created successfully");
     }
 
     @PutMapping("/{id}")
-    public GenericResponse<Customer> updateCustomer(@PathVariable Long id, @RequestBody Customer customer) {
+    public GenericResponse<Customer> updateCustomer(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Customer customer) {
         customer.setId(id);
-        if (customer.getBusinessId() == null) customer.setBusinessId(1L);
+        if (customer.getBusinessId() == null || customer.getBusinessId() <= 0) {
+            customer.setBusinessId(TenantUtil.resolveBusinessId(null, headerBizId));
+        }
         Customer updated = customerService.updateCustomer(customer);
         return GenericResponse.success(updated, "Customer profile updated successfully");
     }

@@ -4,6 +4,7 @@ import com.ledgepro.config.DatabaseConnectionFactory;
 import com.ledgepro.exception.DatabaseOperationException;
 import com.ledgepro.model.Business;
 import com.ledgepro.util.GenericResponse;
+import com.ledgepro.util.TenantUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.*;
@@ -20,11 +21,14 @@ public class SettingsController {
     }
 
     @GetMapping("/business")
-    public GenericResponse<Business> getBusinessProfile(@RequestParam(defaultValue = "1") Long businessId) {
+    public GenericResponse<Business> getBusinessProfile(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) {
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
         String sql = "SELECT * FROM businesses WHERE id = ?";
         try (Connection conn = connectionFactory.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, businessId);
+            ps.setLong(1, targetBizId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Business b = new Business();
@@ -52,8 +56,12 @@ public class SettingsController {
     }
 
     @PutMapping("/business")
-    public GenericResponse<Business> updateBusinessProfile(@RequestBody Business b) {
-        if (b.getId() == null) b.setId(1L);
+    public GenericResponse<Business> updateBusinessProfile(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Business b) {
+        if (b.getId() == null || b.getId() <= 0) {
+            b.setId(TenantUtil.resolveBusinessId(null, headerBizId));
+        }
         String sql = """
             UPDATE businesses 
             SET name = ?, tagline = ?, tax_id = ?, phone = ?, email = ?, 

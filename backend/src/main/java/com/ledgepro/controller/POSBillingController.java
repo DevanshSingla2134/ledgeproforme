@@ -3,6 +3,7 @@ package com.ledgepro.controller;
 import com.ledgepro.model.Invoice;
 import com.ledgepro.service.POSBillingService;
 import com.ledgepro.util.GenericResponse;
+import com.ledgepro.util.TenantUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
@@ -20,8 +21,11 @@ public class POSBillingController {
     }
 
     @GetMapping
-    public GenericResponse<List<Invoice>> getAllInvoices(@RequestParam(defaultValue = "1") Long businessId) {
-        List<Invoice> invoices = billingService.getAllInvoices(businessId);
+    public GenericResponse<List<Invoice>> getAllInvoices(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) {
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        List<Invoice> invoices = billingService.getAllInvoices(targetBizId);
         return GenericResponse.success(invoices);
     }
 
@@ -38,9 +42,11 @@ public class POSBillingController {
     }
 
     @PostMapping("/checkout")
-    public GenericResponse<Invoice> checkout(@RequestBody Invoice invoiceRequest) throws SQLException {
-        if (invoiceRequest.getBusinessId() == null) {
-            invoiceRequest.setBusinessId(1L);
+    public GenericResponse<Invoice> checkout(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Invoice invoiceRequest) throws SQLException {
+        if (invoiceRequest.getBusinessId() == null || invoiceRequest.getBusinessId() <= 0) {
+            invoiceRequest.setBusinessId(TenantUtil.resolveBusinessId(null, headerBizId));
         }
         Invoice generatedInvoice = billingService.checkout(invoiceRequest);
         return GenericResponse.success(generatedInvoice, "Invoice generated and atomic billing transaction committed successfully.");

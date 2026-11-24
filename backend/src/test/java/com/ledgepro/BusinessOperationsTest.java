@@ -49,6 +49,9 @@ public class BusinessOperationsTest {
     @Autowired
     private InvoiceDAO invoiceDAO;
 
+    @Autowired
+    private com.ledgepro.dao.UserDAO userDAO;
+
     @Test
     @DisplayName("Test 1: Product Creation and Retrieval")
     public void testProductLifecycle() {
@@ -205,5 +208,45 @@ public class BusinessOperationsTest {
         assertThrows(InvalidPaymentException.class, () -> {
             billingService.checkout(invoice);
         }, "Credit/Khata sale without customer must be rejected");
+    }
+
+    @Test
+    @DisplayName("Test 6: Multi-Tenant Business Data Isolation — New User Starts Fresh with No Data Leakage")
+    public void testMultiTenantDataIsolation() {
+        // Business 1 (Sharma Supermart) has seeded products
+        java.util.List<Product> b1Products = productService.getAllProducts(1L);
+        assertFalse(b1Products.isEmpty(), "Business 1 must have pre-seeded demo inventory");
+
+        // Simulate a newly registered merchant with their own isolated business row
+        com.ledgepro.model.Business createdBiz = userDAO.createBusinessForUser(1L, "Sharma Electronics New Branch", "9999999999");
+        Long newBizId = createdBiz.getId();
+        assertNotNull(newBizId, "New business must have an auto-generated ID");
+
+        java.util.List<Product> freshProducts = productService.getAllProducts(newBizId);
+        assertTrue(freshProducts.isEmpty(), "Newly registered business must start with 0 products (zero data leakage)");
+
+        java.util.List<Customer> freshCustomers = customerService.getAllCustomers(newBizId);
+        assertTrue(freshCustomers.isEmpty(), "Newly registered business must start with 0 customers");
+
+        // Add a product specifically to the new business
+        Product newProduct = new Product();
+        newProduct.setBusinessId(newBizId);
+        newProduct.setSku("NEWBIZ-" + UUID.randomUUID().toString().substring(0, 5));
+        newProduct.setName("Isolated Merchant Product");
+        newProduct.setCostPrice(new BigDecimal("50.00"));
+        newProduct.setSellingPrice(new BigDecimal("80.00"));
+        newProduct.setQuantity(10);
+        newProduct.setMinStockLevel(2);
+        productService.createProduct(newProduct);
+
+        // Verify only newBizId sees this product
+        java.util.List<Product> newBizList = productService.getAllProducts(newBizId);
+        assertEquals(1, newBizList.size(), "New business should have exactly 1 product");
+        assertEquals("Isolated Merchant Product", newBizList.get(0).getName());
+
+        // Verify Business 1 does NOT see this product
+        boolean leakedToB1 = productService.getAllProducts(1L).stream()
+                .anyMatch(p -> "Isolated Merchant Product".equals(p.getName()));
+        assertFalse(leakedToB1, "Data must NOT leak to Business 1 (Sharma Supermart)");
     }
 }

@@ -113,6 +113,14 @@ public class UserDAOImpl implements UserDAO {
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) {
                     b.setId(keys.getLong(1));
+                    // Provision a default starter category for the newly registered business
+                    try (PreparedStatement catPs = conn.prepareStatement(
+                            "INSERT INTO categories (business_id, name, description) VALUES (?, 'General Merchandise', 'Default catalog category')")) {
+                        catPs.setLong(1, b.getId());
+                        catPs.executeUpdate();
+                    } catch (SQLException ignored) {
+                        // non-fatal
+                    }
                 }
             }
             return b;

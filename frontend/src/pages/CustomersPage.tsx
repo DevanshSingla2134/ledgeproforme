@@ -39,7 +39,7 @@ export const CustomersPage: React.FC<CustomersPageProps> = ({ onNotify }) => {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const data = await api.getCustomers(1, search);
+      const data = await api.getCustomers(undefined, search);
       setCustomers(data);
     } catch (err: any) {
       onNotify('Failed to fetch customers: ' + err.message, 'error');

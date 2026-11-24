@@ -37,7 +37,7 @@ export const SuppliersPage: React.FC<SuppliersPageProps> = ({ onNotify }) => {
   const loadSuppliers = async () => {
     try {
       setLoading(true);
-      const data = await api.getSuppliers(1, search);
+      const data = await api.getSuppliers(undefined, search);
       setSuppliers(data);
     } catch (err: any) {
       onNotify('Error fetching suppliers: ' + err.message, 'error');

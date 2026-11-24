@@ -3,6 +3,7 @@ package com.ledgepro.controller;
 import com.ledgepro.model.Supplier;
 import com.ledgepro.service.SupplierService;
 import com.ledgepro.util.GenericResponse;
+import com.ledgepro.util.TenantUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,13 +21,15 @@ public class SupplierController {
 
     @GetMapping
     public GenericResponse<List<Supplier>> getSuppliers(
-            @RequestParam(defaultValue = "1") Long businessId,
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId,
             @RequestParam(required = false) String search) {
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
         List<Supplier> suppliers;
         if (search != null && !search.trim().isEmpty()) {
-            suppliers = supplierService.searchSuppliers(businessId, search);
+            suppliers = supplierService.searchSuppliers(targetBizId, search);
         } else {
-            suppliers = supplierService.getAllSuppliers(businessId);
+            suppliers = supplierService.getAllSuppliers(targetBizId);
         }
         return GenericResponse.success(suppliers);
     }
@@ -37,15 +40,24 @@ public class SupplierController {
     }
 
     @PostMapping
-    public GenericResponse<Supplier> createSupplier(@RequestBody Supplier supplier) {
-        if (supplier.getBusinessId() == null) supplier.setBusinessId(1L);
+    public GenericResponse<Supplier> createSupplier(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Supplier supplier) {
+        if (supplier.getBusinessId() == null || supplier.getBusinessId() <= 0) {
+            supplier.setBusinessId(TenantUtil.resolveBusinessId(null, headerBizId));
+        }
         return GenericResponse.success(supplierService.createSupplier(supplier), "Supplier registered successfully");
     }
 
     @PutMapping("/{id}")
-    public GenericResponse<Supplier> updateSupplier(@PathVariable Long id, @RequestBody Supplier supplier) {
+    public GenericResponse<Supplier> updateSupplier(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Supplier supplier) {
         supplier.setId(id);
-        if (supplier.getBusinessId() == null) supplier.setBusinessId(1L);
+        if (supplier.getBusinessId() == null || supplier.getBusinessId() <= 0) {
+            supplier.setBusinessId(TenantUtil.resolveBusinessId(null, headerBizId));
+        }
         return GenericResponse.success(supplierService.updateSupplier(supplier), "Supplier updated successfully");
     }
 

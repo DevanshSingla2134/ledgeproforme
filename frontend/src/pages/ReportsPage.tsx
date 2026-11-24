@@ -31,11 +31,11 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onNotify }) => {
     try {
       setLoading(true);
       const [fin, top, pm, inv, exp] = await Promise.all([
-        api.getFinancialSummary(1),
-        api.getTopSellingProducts(1, 6),
-        api.getSalesByPaymentMethod(1),
-        api.getInventoryHealth(1),
-        api.getExpensesByCategory(1),
+        api.getFinancialSummary(),
+        api.getTopSellingProducts(undefined, 6),
+        api.getSalesByPaymentMethod(),
+        api.getInventoryHealth(),
+        api.getExpensesByCategory(),
       ]);
       setFinancialSummary(fin);
       setTopProducts(top);

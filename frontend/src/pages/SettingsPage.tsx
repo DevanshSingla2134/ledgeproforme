@@ -27,7 +27,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNotify }) => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const data = await api.getBusinessProfile(1);
+      const data = await api.getBusinessProfile();
       setBusiness(data);
     } catch (err: any) {
       onNotify('Failed to load business profile: ' + err.message, 'error');

@@ -5,6 +5,7 @@ import com.ledgepro.model.Product;
 import com.ledgepro.service.ProductService;
 import com.ledgepro.util.CsvUtils;
 import com.ledgepro.util.GenericResponse;
+import com.ledgepro.util.TenantUtil;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +17,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-/**
- * Controller demonstrating:
- * - Asynchronous multithreaded processing with ExecutorService & Future
- * - File I/O with BufferedReader & BufferedWriter
- */
 @RestController
 @RequestMapping("/api/export")
 @CrossOrigin(origins = "*")
@@ -34,20 +30,19 @@ public class ExportController {
         this.threadPoolManager = threadPoolManager;
     }
 
-    /**
-     * Multithreaded asynchronous CSV export:
-     * Generates CSV in a separate worker thread using Callable & Future
-     */
     @GetMapping("/products/csv")
-    public ResponseEntity<String> exportProductsCsv(@RequestParam(defaultValue = "1") Long businessId) 
+    public ResponseEntity<String> exportProductsCsv(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) 
             throws ExecutionException, InterruptedException {
 
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
         Future<String> exportFuture = threadPoolManager.submitTask(() -> {
-            List<Product> products = productService.getAllProducts(businessId);
+            List<Product> products = productService.getAllProducts(targetBizId);
             return CsvUtils.exportProductsToCsv(products);
         });
 
-        String csvData = exportFuture.get(); // Await result from concurrency worker thread
+        String csvData = exportFuture.get();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=products-inventory-" + System.currentTimeMillis() + ".csv")
@@ -55,15 +50,14 @@ public class ExportController {
                 .body(csvData);
     }
 
-    /**
-     * CSV file upload & import
-     */
     @PostMapping("/products/csv/import")
     public GenericResponse<Integer> importProductsCsv(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(defaultValue = "1") Long businessId) throws IOException {
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) throws IOException {
 
-        List<Product> parsed = CsvUtils.parseProductCsv(file.getInputStream(), businessId);
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        List<Product> parsed = CsvUtils.parseProductCsv(file.getInputStream(), targetBizId);
         int successCount = 0;
         for (Product p : parsed) {
             try {

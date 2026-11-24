@@ -4,6 +4,7 @@ import com.ledgepro.model.LedgerEntry;
 import com.ledgepro.model.Payment;
 import com.ledgepro.service.KhataLedgerService;
 import com.ledgepro.util.GenericResponse;
+import com.ledgepro.util.TenantUtil;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,15 +35,20 @@ public class KhataController {
 
     @GetMapping("/activity")
     public GenericResponse<List<LedgerEntry>> getRecentActivity(
-            @RequestParam(defaultValue = "1") Long businessId,
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId,
             @RequestParam(defaultValue = "10") int limit) {
-        List<LedgerEntry> activity = khataLedgerService.getRecentLedgerActivity(businessId, limit);
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        List<LedgerEntry> activity = khataLedgerService.getRecentLedgerActivity(targetBizId, limit);
         return GenericResponse.success(activity);
     }
 
     @PostMapping("/payment")
-    public GenericResponse<Payment> recordKhataPayment(@RequestBody Map<String, Object> payload) throws SQLException {
-        Long businessId = payload.get("businessId") != null ? Long.parseLong(payload.get("businessId").toString()) : 1L;
+    public GenericResponse<Payment> recordKhataPayment(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Map<String, Object> payload) throws SQLException {
+        Long rawBizId = payload.get("businessId") != null ? Long.parseLong(payload.get("businessId").toString()) : null;
+        Long businessId = TenantUtil.resolveBusinessId(rawBizId, headerBizId);
         Long customerId = Long.parseLong(payload.get("customerId").toString());
         BigDecimal amount = new BigDecimal(payload.get("amount").toString());
         String paymentMethod = payload.get("paymentMethod") != null ? payload.get("paymentMethod").toString() : "CASH";
@@ -54,8 +60,11 @@ public class KhataController {
     }
 
     @PostMapping("/adjustment")
-    public GenericResponse<LedgerEntry> recordAdjustment(@RequestBody Map<String, Object> payload) throws SQLException {
-        Long businessId = payload.get("businessId") != null ? Long.parseLong(payload.get("businessId").toString()) : 1L;
+    public GenericResponse<LedgerEntry> recordAdjustment(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Map<String, Object> payload) throws SQLException {
+        Long rawBizId = payload.get("businessId") != null ? Long.parseLong(payload.get("businessId").toString()) : null;
+        Long businessId = TenantUtil.resolveBusinessId(rawBizId, headerBizId);
         Long customerId = Long.parseLong(payload.get("customerId").toString());
         String entryType = payload.get("entryType").toString();
         BigDecimal amount = new BigDecimal(payload.get("amount").toString());

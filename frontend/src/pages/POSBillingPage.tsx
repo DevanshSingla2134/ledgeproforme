@@ -16,7 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Customer, Invoice, InvoiceItem, Product } from '../types';
-import { api } from '../services/api';
+import { api, getActiveBusinessId } from '../services/api';
 
 interface POSBillingPageProps {
   onNotify: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -55,8 +55,8 @@ export const POSBillingPage: React.FC<POSBillingPageProps> = ({ onNotify, onRefr
   const loadData = async () => {
     try {
       const [prodData, custData] = await Promise.all([
-        api.getProducts(1),
-        api.getCustomers(1),
+        api.getProducts(),
+        api.getCustomers(),
       ]);
       setProducts(prodData);
       setCustomers(custData);
@@ -179,7 +179,7 @@ export const POSBillingPage: React.FC<POSBillingPageProps> = ({ onNotify, onRefr
     try {
       setIsProcessing(true);
       const invoicePayload: Invoice = {
-        businessId: 1,
+        businessId: getActiveBusinessId(),
         customerId: selectedCustomer?.id || null,
         customerName: selectedCustomer?.name,
         customerPhone: selectedCustomer?.phone,

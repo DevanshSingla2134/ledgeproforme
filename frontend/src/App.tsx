@@ -12,7 +12,7 @@ import { SuppliersPage } from './pages/SuppliersPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuthResponse, Business, DashboardStats, User } from './types';
-import { api } from './services/api';
+import { api, getActiveBusinessId } from './services/api';
 
 export const App: React.FC = () => {
   // Authentication State Gate:
@@ -83,7 +83,7 @@ export const App: React.FC = () => {
     if (!currentUser) return;
     try {
       setLoadingStats(true);
-      const bId = currentBusiness?.id || 1;
+      const bId = currentBusiness?.id || getActiveBusinessId();
       const data = await api.getDashboardStats(bId);
       setStats(data);
     } catch (err: any) {
@@ -99,7 +99,7 @@ export const App: React.FC = () => {
       const interval = setInterval(loadDashboardStats, 30000);
       return () => clearInterval(interval);
     }
-  }, [currentUser]);
+  }, [currentUser, currentBusiness]);
 
   // =========================================================================
   // AUTHENTICATION GATE:

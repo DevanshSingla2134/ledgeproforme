@@ -3,6 +3,7 @@ package com.ledgepro.controller;
 import com.ledgepro.model.Product;
 import com.ledgepro.service.ProductService;
 import com.ledgepro.util.GenericResponse;
+import com.ledgepro.util.TenantUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,19 +21,21 @@ public class ProductController {
 
     @GetMapping
     public GenericResponse<List<Product>> getProducts(
-            @RequestParam(defaultValue = "1") Long businessId,
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "true") boolean ascending) {
 
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
         List<Product> products;
         if (search != null || categoryId != null) {
-            products = productService.searchProducts(businessId, search, categoryId);
+            products = productService.searchProducts(targetBizId, search, categoryId);
         } else if (sortBy != null) {
-            products = productService.getSortedProducts(businessId, sortBy, ascending);
+            products = productService.getSortedProducts(targetBizId, sortBy, ascending);
         } else {
-            products = productService.getAllProducts(businessId);
+            products = productService.getAllProducts(targetBizId);
         }
         return GenericResponse.success(products);
     }
@@ -43,21 +46,33 @@ public class ProductController {
     }
 
     @GetMapping("/low-stock")
-    public GenericResponse<List<Product>> getLowStockProducts(@RequestParam(defaultValue = "1") Long businessId) {
-        return GenericResponse.success(productService.getLowStockProducts(businessId));
+    public GenericResponse<List<Product>> getLowStockProducts(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestParam(required = false) Long businessId) {
+        Long targetBizId = TenantUtil.resolveBusinessId(businessId, headerBizId);
+        return GenericResponse.success(productService.getLowStockProducts(targetBizId));
     }
 
     @PostMapping
-    public GenericResponse<Product> createProduct(@RequestBody Product product) {
-        if (product.getBusinessId() == null) product.setBusinessId(1L);
+    public GenericResponse<Product> createProduct(
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Product product) {
+        if (product.getBusinessId() == null || product.getBusinessId() <= 0) {
+            product.setBusinessId(TenantUtil.resolveBusinessId(null, headerBizId));
+        }
         Product created = productService.createProduct(product);
         return GenericResponse.success(created, "Product created successfully");
     }
 
     @PutMapping("/{id}")
-    public GenericResponse<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+    public GenericResponse<Product> updateProduct(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Business-Id", required = false) String headerBizId,
+            @RequestBody Product product) {
         product.setId(id);
-        if (product.getBusinessId() == null) product.setBusinessId(1L);
+        if (product.getBusinessId() == null || product.getBusinessId() <= 0) {
+            product.setBusinessId(TenantUtil.resolveBusinessId(null, headerBizId));
+        }
         Product updated = productService.updateProduct(product);
         return GenericResponse.success(updated, "Product updated successfully");
     }

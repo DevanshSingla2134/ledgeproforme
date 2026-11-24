@@ -44,7 +44,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({ onNotify }) => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await api.getProducts(1, search, undefined, sortBy, sortAsc);
+      const data = await api.getProducts(undefined, search, undefined, sortBy, sortAsc);
       setProducts(data);
     } catch (err: any) {
       onNotify(err.message || 'Failed to fetch inventory', 'error');

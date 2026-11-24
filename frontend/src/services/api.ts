@@ -2,13 +2,34 @@ import { AuthResponse, Business, Customer, DashboardStats, Expense, GenericRespo
 
 const API_BASE = '/api';
 
+export function getActiveBusinessId(): number {
+  try {
+    const saved = localStorage.getItem('ledgepro_business');
+    if (saved) {
+      const b = JSON.parse(saved);
+      if (b && b.id) return Number(b.id);
+    }
+  } catch {}
+  return 1;
+}
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const activeBusinessId = getActiveBusinessId();
+  const token = localStorage.getItem('ledgepro_token');
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Business-Id': String(activeBusinessId),
+    ...(options?.headers as Record<string, string> || {}),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_BASE}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
     ...options,
+    headers,
   });
 
   if (!res.ok) {
@@ -37,11 +58,13 @@ export const api = {
     request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Dashboard
-  getDashboardStats: (businessId = 1) => request<DashboardStats>(`/dashboard/stats?businessId=${businessId}`),
-  getLiveLowStockAlerts: () => request<Product[]>('/dashboard/alerts/low-stock'),
+  getDashboardStats: (businessId = getActiveBusinessId()) => 
+    request<DashboardStats>(`/dashboard/stats?businessId=${businessId}`),
+  getLiveLowStockAlerts: (businessId = getActiveBusinessId()) => 
+    request<Product[]>(`/dashboard/alerts/low-stock?businessId=${businessId}`),
 
   // Products
-  getProducts: (businessId = 1, search?: string, categoryId?: number, sortBy?: string, ascending = true) => {
+  getProducts: (businessId = getActiveBusinessId(), search?: string, categoryId?: number, sortBy?: string, ascending = true) => {
     const params = new URLSearchParams({ businessId: String(businessId) });
     if (search) params.append('search', search);
     if (categoryId) params.append('categoryId', String(categoryId));
@@ -52,62 +75,99 @@ export const api = {
     return request<Product[]>(`/products?${params.toString()}`);
   },
   getProductById: (id: number) => request<Product>(`/products/${id}`),
-  getLowStockProducts: (businessId = 1) => request<Product[]>(`/products/low-stock?businessId=${businessId}`),
-  createProduct: (product: Product) => request<Product>('/products', { method: 'POST', body: JSON.stringify(product) }),
-  updateProduct: (id: number, product: Product) => request<Product>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(product) }),
+  getLowStockProducts: (businessId = getActiveBusinessId()) => 
+    request<Product[]>(`/products/low-stock?businessId=${businessId}`),
+  createProduct: (product: Product) => {
+    product.businessId = product.businessId || getActiveBusinessId();
+    return request<Product>('/products', { method: 'POST', body: JSON.stringify(product) });
+  },
+  updateProduct: (id: number, product: Product) => {
+    product.businessId = product.businessId || getActiveBusinessId();
+    return request<Product>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(product) });
+  },
   deleteProduct: (id: number) => request<boolean>(`/products/${id}`, { method: 'DELETE' }),
 
   // Customers
-  getCustomers: (businessId = 1, search?: string, outstandingOnly = false) => {
+  getCustomers: (businessId = getActiveBusinessId(), search?: string, outstandingOnly = false) => {
     const params = new URLSearchParams({ businessId: String(businessId), outstandingOnly: String(outstandingOnly) });
     if (search) params.append('search', search);
     return request<Customer[]>(`/customers?${params.toString()}`);
   },
   getCustomerById: (id: number) => request<Customer>(`/customers/${id}`),
-  createCustomer: (customer: Customer) => request<Customer>('/customers', { method: 'POST', body: JSON.stringify(customer) }),
-  updateCustomer: (id: number, customer: Customer) => request<Customer>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(customer) }),
+  createCustomer: (customer: Customer) => {
+    customer.businessId = customer.businessId || getActiveBusinessId();
+    return request<Customer>('/customers', { method: 'POST', body: JSON.stringify(customer) });
+  },
+  updateCustomer: (id: number, customer: Customer) => {
+    customer.businessId = customer.businessId || getActiveBusinessId();
+    return request<Customer>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(customer) });
+  },
   deleteCustomer: (id: number) => request<boolean>(`/customers/${id}`, { method: 'DELETE' }),
 
   // POS Invoices
-  getAllInvoices: (businessId = 1) => request<Invoice[]>(`/invoices?businessId=${businessId}`),
+  getAllInvoices: (businessId = getActiveBusinessId()) => 
+    request<Invoice[]>(`/invoices?businessId=${businessId}`),
   getInvoiceById: (id: number) => request<Invoice>(`/invoices/${id}`),
   getInvoiceByNumber: (invoiceNumber: string) => request<Invoice>(`/invoices/number/${invoiceNumber}`),
-  checkoutInvoice: (invoice: Invoice) => request<Invoice>('/invoices/checkout', { method: 'POST', body: JSON.stringify(invoice) }),
+  checkoutInvoice: (invoice: Invoice) => {
+    invoice.businessId = invoice.businessId || getActiveBusinessId();
+    return request<Invoice>('/invoices/checkout', { method: 'POST', body: JSON.stringify(invoice) });
+  },
 
   // Digital Khata
   getCustomerLedgerTimeline: (customerId: number) => request<LedgerEntry[]>(`/khata/customer/${customerId}`),
-  getRecentKhataActivity: (businessId = 1, limit = 15) => request<LedgerEntry[]>(`/khata/activity?businessId=${businessId}&limit=${limit}`),
-  recordKhataPayment: (payload: { businessId: number; customerId: number; amount: number; paymentMethod: string; referenceNumber?: string; notes?: string }) =>
-    request<Payment>('/khata/payment', { method: 'POST', body: JSON.stringify(payload) }),
-  recordAdjustment: (payload: { businessId: number; customerId: number; entryType: string; amount: number; description: string }) =>
-    request<LedgerEntry>('/khata/adjustment', { method: 'POST', body: JSON.stringify(payload) }),
+  getRecentKhataActivity: (businessId = getActiveBusinessId(), limit = 15) => 
+    request<LedgerEntry[]>(`/khata/activity?businessId=${businessId}&limit=${limit}`),
+  recordKhataPayment: (payload: { businessId?: number; customerId: number; amount: number; paymentMethod: string; referenceNumber?: string; notes?: string }) => {
+    payload.businessId = payload.businessId || getActiveBusinessId();
+    return request<Payment>('/khata/payment', { method: 'POST', body: JSON.stringify(payload) });
+  },
+  recordAdjustment: (payload: { businessId?: number; customerId: number; entryType: string; amount: number; description: string }) => {
+    payload.businessId = payload.businessId || getActiveBusinessId();
+    return request<LedgerEntry>('/khata/adjustment', { method: 'POST', body: JSON.stringify(payload) });
+  },
 
   // Reports & Analytics
-  getTopSellingProducts: (businessId = 1, limit = 5) => request<{ productName: string; totalRevenue: number }[]>(`/reports/top-products?businessId=${businessId}&limit=${limit}`),
-  getSalesByPaymentMethod: (businessId = 1) => request<Record<string, number>>(`/reports/payment-methods?businessId=${businessId}`),
-  getInventoryHealth: (businessId = 1) => request<any>(`/reports/inventory-health?businessId=${businessId}`),
-  getFinancialSummary: (businessId = 1) => request<any>(`/reports/financial-summary?businessId=${businessId}`),
-  getExpensesByCategory: (businessId = 1) => request<Record<string, number>>(`/reports/expenses-by-category?businessId=${businessId}`),
+  getTopSellingProducts: (businessId = getActiveBusinessId(), limit = 5) => 
+    request<{ productName: string; totalRevenue: number }[]>(`/reports/top-products?businessId=${businessId}&limit=${limit}`),
+  getSalesByPaymentMethod: (businessId = getActiveBusinessId()) => 
+    request<Record<string, number>>(`/reports/payment-methods?businessId=${businessId}`),
+  getInventoryHealth: (businessId = getActiveBusinessId()) => 
+    request<any>(`/reports/inventory-health?businessId=${businessId}`),
+  getFinancialSummary: (businessId = getActiveBusinessId()) => 
+    request<any>(`/reports/financial-summary?businessId=${businessId}`),
+  getExpensesByCategory: (businessId = getActiveBusinessId()) => 
+    request<Record<string, number>>(`/reports/expenses-by-category?businessId=${businessId}`),
 
   // Suppliers
-  getSuppliers: (businessId = 1, search?: string) => {
+  getSuppliers: (businessId = getActiveBusinessId(), search?: string) => {
     const params = new URLSearchParams({ businessId: String(businessId) });
     if (search) params.append('search', search);
     return request<Supplier[]>(`/suppliers?${params.toString()}`);
   },
-  createSupplier: (supplier: Supplier) => request<Supplier>('/suppliers', { method: 'POST', body: JSON.stringify(supplier) }),
+  createSupplier: (supplier: Supplier) => {
+    supplier.businessId = supplier.businessId || getActiveBusinessId();
+    return request<Supplier>('/suppliers', { method: 'POST', body: JSON.stringify(supplier) });
+  },
   deleteSupplier: (id: number) => request<boolean>(`/suppliers/${id}`, { method: 'DELETE' }),
 
   // Expenses
-  getExpenses: (businessId = 1, category?: string) => {
+  getExpenses: (businessId = getActiveBusinessId(), category?: string) => {
     const params = new URLSearchParams({ businessId: String(businessId) });
     if (category) params.append('category', category);
     return request<Expense[]>(`/expenses?${params.toString()}`);
   },
-  createExpense: (expense: Expense) => request<Expense>('/expenses', { method: 'POST', body: JSON.stringify(expense) }),
+  createExpense: (expense: Expense) => {
+    expense.businessId = expense.businessId || getActiveBusinessId();
+    return request<Expense>('/expenses', { method: 'POST', body: JSON.stringify(expense) });
+  },
   deleteExpense: (id: number) => request<boolean>(`/expenses/${id}`, { method: 'DELETE' }),
 
   // Business Profile & Settings
-  getBusinessProfile: (businessId = 1) => request<Business>(`/settings/business?businessId=${businessId}`),
-  updateBusinessProfile: (business: Business) => request<Business>('/settings/business', { method: 'PUT', body: JSON.stringify(business) }),
+  getBusinessProfile: (businessId = getActiveBusinessId()) => 
+    request<Business>(`/settings/business?businessId=${businessId}`),
+  updateBusinessProfile: (business: Business) => {
+    business.id = business.id || getActiveBusinessId();
+    return request<Business>('/settings/business', { method: 'PUT', body: JSON.stringify(business) });
+  },
 };
