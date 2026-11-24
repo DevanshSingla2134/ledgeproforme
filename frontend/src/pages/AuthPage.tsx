@@ -168,13 +168,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onNotify }) 
             </div>
           </div>
 
-          {/* Academic Footer */}
+          {/* Enterprise Security Footer */}
           <div className="mt-8 pt-6 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
             <div>
-              <span className="text-slate-300 font-bold block">Chitkara University</span>
-              <span>B.E. CSE &bull; Semester 3 &bull; Java Coursework</span>
+              <span className="text-slate-300 font-bold block">Enterprise Data Protection</span>
+              <span>256-Bit Encryption &bull; Automated Audit Trail &bull; 99.9% Uptime</span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center text-blue-400">
+            <div className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center text-emerald-400">
               <ShieldCheck className="w-4 h-4" />
             </div>
           </div>
